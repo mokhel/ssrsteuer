@@ -1,0 +1,20 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.idea/
+.vscode/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# VS Code
+*.code-workspace
+
+# Mac/Linux/Windows
+.DS_Store
+*.iml
+*.lock
+
+# IDEs
+*.swp
+*.swo
