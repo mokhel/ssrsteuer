@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/background_wrapper.dart'; // Hintergrund-Wrapper importieren
+import 'package:http/http.dart' as http;
 
 class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
@@ -10,66 +11,80 @@ class DevicesPage extends StatefulWidget {
 }
 
 class _DevicesPageState extends State<DevicesPage> {
-  bool luefter = false;
-  bool heizmatte = false;
-  bool befeuchter = false;
-  bool licht = false;
+  bool heizmatteAn = false;
+  bool luefterAn = false;
+  bool befeuchterAn = false;
+  bool lichtAn = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadStates();
-  }
+  final String espIp = 'http://192.168.178.85'; // <- ggf. anpassen
 
-  Future<void> _loadStates() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      luefter = prefs.getBool('luefter') ?? false;
-      heizmatte = prefs.getBool('heizmatte') ?? false;
-      befeuchter = prefs.getBool('befeuchter') ?? false;
-      licht = prefs.getBool('licht') ?? false;
-    });
-  }
-
-  Future<void> _saveState(String key, bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(key, value);
+  Future<void> schalteGeraet(String geraet, bool status) async {
+    final url = Uri.parse('$espIp/$geraet?status=${status ? 'ein' : 'aus'}');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        setState(() {
+          if (geraet == 'heizmatte') heizmatteAn = status;
+          if (geraet == 'luefter') luefterAn = status;
+          if (geraet == 'befeuchter') befeuchterAn = status;
+          if (geraet == 'licht') lichtAn = status;
+        });
+      } else {
+        print('Fehler beim Senden: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Verbindungsfehler: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    //  appBar: AppBar(title: const Text('Geräte')),
-      body: BackgroundWrapper(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/images/background.webp"),
+            fit: BoxFit.cover,
+          ),
+        ),
         child: ListView(
+          padding: const EdgeInsets.all(16),
           children: [
-            _buildSwitchTile('Lüfter', luefter, (value) {
-              setState(() => luefter = value);
-              _saveState('luefter', value);
-            }),
-            _buildSwitchTile('Heizmatte', heizmatte, (value) {
-              setState(() => heizmatte = value);
-              _saveState('heizmatte', value);
-            }),
-            _buildSwitchTile('Befeuchter', befeuchter, (value) {
-              setState(() => befeuchter = value);
-              _saveState('befeuchter', value);
-            }),
-            _buildSwitchTile('Beleuchtung', licht, (value) {
-              setState(() => licht = value);
-              _saveState('licht', value);
-            }),
+            SwitchListTile(
+              title: const Text(
+                'Lüfter',
+                style: TextStyle(color: Colors.white),
+              ),
+              value: luefterAn,
+              onChanged: (val) => schalteGeraet('luefter', val),
+            ),
+            SwitchListTile(
+              title: const Text(
+                'Heizmatte',
+                style: TextStyle(color: Colors.white),
+              ),
+              value: heizmatteAn,
+              onChanged: (val) => schalteGeraet('heizmatte', val),
+            ),
+            SwitchListTile(
+              title: const Text(
+                'Befeuchter',
+                style: TextStyle(color: Colors.white),
+              ),
+              value: befeuchterAn,
+              onChanged: (val) => schalteGeraet('befeuchter', val),
+            ),
+            SwitchListTile(
+              title: const Text(
+                'Beleuchtung',
+                style: TextStyle(color: Colors.white),
+              ),
+              value: lichtAn,
+              onChanged: (val) => schalteGeraet('licht', val),
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSwitchTile(String title, bool value, Function(bool) onChanged) {
-    return SwitchListTile(
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      value: value,
-      onChanged: onChanged,
     );
   }
 }

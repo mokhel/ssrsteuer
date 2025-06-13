@@ -13,10 +13,10 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   double temperature = 0.0;
-  double humidity = 0.0;
+  double pressure = 0.0;
   bool isLoading = true;
 
-  final String espIp = 'http://192.168.178.85/data'; // Deine ESP-IP hier
+  final String espUrl = 'http://192.168.178.85/sensor';
   Timer? _timer;
 
   @override
@@ -39,13 +39,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> fetchData() async {
     try {
-      final response = await http.get(Uri.parse(espIp));
+      final response = await http.get(Uri.parse(espUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (!mounted) return;
         setState(() {
-          temperature = data['temperature'];
-          humidity = data['humidity'];
+          temperature = data['temperatur']?.toDouble() ?? 0.0;
+          pressure = data['druck']?.toDouble() ?? 0.0;
           isLoading = false;
         });
       } else {
@@ -72,7 +72,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                '💧 Luftfeuchtigkeit: ${humidity.toStringAsFixed(1)} %',
+                '🌬 Luftdruck: ${pressure.toStringAsFixed(1)} hPa',
                 style: const TextStyle(fontSize: 24, color: Colors.white),
               ),
               const SizedBox(height: 24),
